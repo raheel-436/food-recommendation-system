@@ -144,3 +144,38 @@ st.dataframe(
     use_container_width=True,
     hide_index=True,
 )
+
+st.divider()
+st.header("Association Rules Visualization")
+
+if not filtered_positive_rules.empty:
+
+    top_rules = (
+        filtered_positive_rules.sort_values("lift", ascending=False).head(10).copy()
+    )
+
+    top_rules["Rule"] = top_rules["antecedents"] + " → " + top_rules["consequents"]
+
+    fig = px.bar(
+        top_rules,
+        x="lift",
+        y="Rule",
+        orientation="h",
+        title="Top 10 Association Rules by Lift",
+        text="lift",
+        color="confidence",
+        color_continuous_scale="Blues",
+    )
+
+    fig.update_layout(
+        yaxis=dict(autorange="reversed"),
+        xaxis_title="Lift",
+        yaxis_title="Association Rule",
+    )
+
+    fig.add_vline(x=1, line_dash="dash", line_color="red")
+
+    st.plotly_chart(fig, use_container_width=True)
+
+else:
+    st.warning("No positive association rules found " "for the selected thresholds.")
