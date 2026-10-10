@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import networkx as nx
+import plotly.graph_objects as go
 
 st.set_page_config(
     page_title="Food Recommendation System", page_icon="🍔", layout="wide"
@@ -213,3 +215,45 @@ if smart_basket:
         st.info("No positive association rules found " "for this basket.")
 else:
     st.info("Add food items to your basket to get suggestions.")
+
+st.divider()
+st.header("🔎 Association Rules Explorer")
+
+search_food = st.selectbox(
+    "Select a food to explore its associations:",
+    options=food_items,
+    index=None,
+    placeholder="Search for a food...",
+)
+
+if search_food:
+
+    matching_rules = rules[
+        rules["antecedents"].apply(lambda x: search_food in x.split(", "))
+        | rules["consequents"].apply(lambda x: search_food in x.split(", "))
+    ].copy()
+
+    matching_rules = matching_rules[matching_rules["lift"] > 1].sort_values(
+        "lift", ascending=False
+    )
+
+    st.write(
+        f"Found **{len(matching_rules)}** positive "
+        f"association rules involving **{search_food}**."
+    )
+
+    if not matching_rules.empty:
+
+        st.dataframe(
+            matching_rules[
+                ["antecedents", "consequents", "support", "confidence", "lift"]
+            ].round(4),
+            use_container_width=True,
+            hide_index=True,
+        )
+
+    else:
+        st.info("No positive association rules found " "for this food.")
+
+else:
+    st.info("Select a food to explore its association rules.")
