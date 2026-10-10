@@ -99,3 +99,48 @@ fig = px.bar(
 fig.update_layout(xaxis_tickangle=-45)
 
 st.plotly_chart(fig, use_container_width=True)
+
+st.divider()
+st.header("Association Rule Threshold Playground")
+
+st.write(
+    "Adjust the thresholds to explore how they affect "
+    "the number of association rules."
+)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    min_support = st.slider(
+        "Minimum Support", min_value=0.01, max_value=0.05, value=0.01, step=0.005
+    )
+
+with col2:
+    min_confidence = st.slider(
+        "Minimum Confidence", min_value=0.10, max_value=0.25, value=0.10, step=0.01
+    )
+
+# Filter existing rules
+filtered_rules = rules[
+    (rules["support"] >= min_support) & (rules["confidence"] >= min_confidence)
+]
+
+filtered_positive_rules = filtered_rules[filtered_rules["lift"] > 1]
+
+col3, col4 = st.columns(2)
+
+with col3:
+    st.metric("Rules Matching Thresholds", len(filtered_rules))
+
+with col4:
+    st.metric("Positive Association Rules", len(filtered_positive_rules))
+
+st.subheader("Filtered Association Rules")
+
+st.dataframe(
+    filtered_positive_rules[
+        ["antecedents", "consequents", "support", "confidence", "lift"]
+    ].round(4),
+    use_container_width=True,
+    hide_index=True,
+)
