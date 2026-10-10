@@ -183,7 +183,7 @@ else:
     st.warning("No positive association rules found " "for the selected thresholds.")
 
 st.divider()
-st.header("🛒 Smart Basket Analysis")
+st.header("Smart Basket Analysis")
 
 smart_basket = st.multiselect(
     "Build your food basket:", options=food_items, key="smart_basket"
@@ -217,7 +217,7 @@ else:
     st.info("Add food items to your basket to get suggestions.")
 
 st.divider()
-st.header("🔎 Association Rules Explorer")
+st.header("Association Rules Explorer")
 
 search_food = st.selectbox(
     "Select a food to explore its associations:",
@@ -257,3 +257,72 @@ if search_food:
 
 else:
     st.info("Select a food to explore its association rules.")
+
+st.divider()
+st.header("Food Association Network")
+
+st.write("Explore connections between foods based on association rules.")
+
+# Use the strongest unique food pairs
+network_rules = rules[rules["lift"] > 1].copy()
+network_rules = network_rules.sort_values("lift", ascending=False)
+
+G = nx.Graph()
+
+for _, rule in network_rules.iterrows():
+    food_a = rule["antecedents"]
+    food_b = rule["consequents"]
+
+    G.add_edge(food_a, food_b, weight=rule["lift"])
+
+# Calculate positions
+pos = nx.spring_layout(G, seed=42)
+
+# Create edges
+edge_x = []
+edge_y = []
+
+for source, target in G.edges():
+    x0, y0 = pos[source]
+    x1, y1 = pos[target]
+
+    edge_x.extend([x0, x1, None])
+    edge_y.extend([y0, y1, None])
+
+edge_trace = go.Scatter(
+    x=edge_x, y=edge_y, mode="lines", line=dict(width=1, color="gray"), hoverinfo="none"
+)
+
+# Create nodes
+node_x = []
+node_y = []
+node_names = []
+
+for node in G.nodes():
+    x, y = pos[node]
+    node_x.append(x)
+    node_y.append(y)
+    node_names.append(node)
+
+node_trace = go.Scatter(
+    x=node_x,
+    y=node_y,
+    mode="markers+text",
+    text=node_names,
+    textposition="top center",
+    hovertext=node_names,
+    hoverinfo="text",
+    marker=dict(size=15, color="skyblue", line=dict(width=2, color="darkblue")),
+)
+
+fig = go.Figure(data=[edge_trace, node_trace])
+
+fig.update_layout(
+    title="Food Association Network",
+    showlegend=False,
+    height=650,
+    xaxis=dict(visible=False),
+    yaxis=dict(visible=False),
+)
+
+st.plotly_chart(fig, use_container_width=True)
