@@ -179,3 +179,37 @@ if not filtered_positive_rules.empty:
 
 else:
     st.warning("No positive association rules found " "for the selected thresholds.")
+
+st.divider()
+st.header("🛒 Smart Basket Analysis")
+
+smart_basket = st.multiselect(
+    "Build your food basket:", options=food_items, key="smart_basket"
+)
+
+if smart_basket:
+    st.write("### Your Basket")
+    st.write(", ".join(smart_basket))
+
+    # Find recommendations
+    smart_recommendations = recommend_food(smart_basket, rules, top_n=5)
+
+    if not smart_recommendations.empty:
+        st.subheader("Suggested Additions")
+
+        for _, rec in smart_recommendations.iterrows():
+            with st.container(border=True):
+                st.write(f"**{rec['Recommended Item']}**")
+
+                st.write(
+                    f"Recommended because your basket contains "
+                    f"**{rec['Based On']}**."
+                )
+
+                st.write(
+                    f"Confidence: {rec['Confidence']:.2%} | " f"Lift: {rec['Lift']:.2f}"
+                )
+    else:
+        st.info("No positive association rules found " "for this basket.")
+else:
+    st.info("Add food items to your basket to get suggestions.")
