@@ -326,3 +326,84 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
+
+st.divider()
+st.header("What-If Analysis")
+
+st.write(
+    "Compare recommendations before and after adding "
+    "another food item to your basket."
+)
+
+# Original basket
+original_basket = st.multiselect(
+    "Select your original basket:", options=food_items, key="whatif_original"
+)
+
+# Food to add
+remaining_foods = [food for food in food_items if food not in original_basket]
+
+additional_food = st.selectbox(
+    "What if you add this food?",
+    options=remaining_foods,
+    index=None,
+    placeholder="Choose an additional food...",
+)
+
+if original_basket and additional_food:
+
+    modified_basket = original_basket + [additional_food]
+
+    original_recs = recommend_food(original_basket, rules, top_n=5)
+
+    modified_recs = recommend_food(modified_basket, rules, top_n=5)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("Before")
+        st.write("Basket:", ", ".join(original_basket))
+
+        if not original_recs.empty:
+            st.dataframe(
+                original_recs[["Recommended Item", "Confidence", "Lift"]].round(4),
+                hide_index=True,
+            )
+        else:
+            st.info("No recommendations found.")
+
+    with col2:
+        st.subheader("After")
+        st.write("Basket:", ", ".join(modified_basket))
+
+        if not modified_recs.empty:
+            st.dataframe(
+                modified_recs[["Recommended Item", "Confidence", "Lift"]].round(4),
+                hide_index=True,
+            )
+        else:
+            st.info("No recommendations found.")
+
+    before_items = (
+        set(original_recs["Recommended Item"]) if not original_recs.empty else set()
+    )
+
+    after_items = (
+        set(modified_recs["Recommended Item"]) if not modified_recs.empty else set()
+    )
+
+    st.success(
+        f"New recommendations: "
+        f"{', '.join(sorted(after_items - before_items)) or 'None'}"
+    )
+
+    st.write(
+        "**Removed recommendations:**",
+        ", ".join(sorted(before_items - after_items)) or "None",
+    )
+
+else:
+    st.info(
+        "Select an original basket and an additional food "
+        "to compare recommendations."
+    )
